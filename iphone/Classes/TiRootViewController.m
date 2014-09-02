@@ -1208,11 +1208,8 @@
 -(CGAffineTransform)calculateTransfromForOrientation:(UIInterfaceOrientation)toOrientation
 {
     CGAffineTransform transform;
-    UIInterfaceOrientation actualOrientation = deviceOrientation;
-    UIInterfaceOrientation statusBarOrientation = [[UIApplication sharedApplication] statusBarOrientation];
-    NSLog(@"statusBarOrientation %d,\ndeviceOrientation %d\n", statusBarOrientation, deviceOrientation);
     
-    switch (deviceOrientation) {
+    switch ([self getCalculatedDeviceOrientation]) {
         case UIInterfaceOrientationPortrait:
             switch (toOrientation) {
                 case UIInterfaceOrientationPortraitUpsideDown:
@@ -1300,6 +1297,48 @@
     return transform;
 }
 
+-(UIInterfaceOrientation)calculateOrientationFromTransfrom:(CGAffineTransform)transform
+{    
+    NSArray *orientations = @[
+                              [NSNumber numberWithInteger:UIInterfaceOrientationPortrait],
+                              [NSNumber numberWithInteger:UIInterfaceOrientationLandscapeLeft],
+                              [NSNumber numberWithInteger:UIInterfaceOrientationPortraitUpsideDown],
+                              [NSNumber numberWithInteger:UIInterfaceOrientationLandscapeRight]
+                              ];
+    
+    NSUInteger index = [orientations indexOfObject:[NSNumber numberWithInteger:[self getCalculatedDeviceOrientation]]];
+    NSLog(@"index: %d", index);
+    
+    if (transform.c == 1) {
+        // Rotate Right 90
+        NSLog(@"Rotate Right 90");
+        index = (index + 1) % 4;
+    } else if (transform.b == 1) {
+        // Rotate Left 90
+        NSLog(@"Rotate Left 90");
+        index = (index + 3) % 4;
+    } else if (transform.a == -1) {
+        // 180
+        NSLog(@"Rotate 180");
+        index = (index + 2) % 4;
+    }
+    
+    NSLog(@"new index: %d", index);
+    
+    UIInterfaceOrientation newOrientation = [orientations[index] integerValue];
+    
+    NSLog(@"NEW Orientation %d", newOrientation);
+    
+    return newOrientation;
+}
+
+-(UIInterfaceOrientation)getCalculatedDeviceOrientation
+{
+    if (calculatedDeviceOrientation == UIInterfaceOrientationUnknown) {
+        calculatedDeviceOrientation = [[UIApplication sharedApplication] statusBarOrientation];
+    }
+    return calculatedDeviceOrientation;
+}
 
 -(void)manuallyRotateToOrientation:(UIInterfaceOrientation)newOrientation duration:(NSTimeInterval)duration
 {
@@ -1364,6 +1403,11 @@
     }
 
     [self didRotateFromInterfaceOrientation:oldOrientation];
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+    calculatedDeviceOrientation = [self calculateOrientationFromTransfrom: [coordinator targetTransform]];
 }
 
 #pragma mark - TiOrientationController

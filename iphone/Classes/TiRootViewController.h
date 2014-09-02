@@ -43,6 +43,7 @@
     UIStatusBarStyle defaultStatusBarStyle;
     
     UIInterfaceOrientation deviceOrientation;
+    UIInterfaceOrientation calculatedDeviceOrientation;
     
     BOOL statusBarIsHidden;
     BOOL statusBarVisibilityChanged;
